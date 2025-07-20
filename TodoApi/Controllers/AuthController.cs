@@ -2,45 +2,48 @@ using Microsoft.AspNetCore.Mvc;
 using TodoApi.Models;
 using TodoApi.Services;
 
-namespace TodoApi.Controllers;
-
-[ApiController]
-[Route("api/[controller]")]
-public class AuthController : ControllerBase
+namespace TodoApi.Controllers
 {
-    private readonly AuthService _authService;
-
-    public AuthController(AuthService authService)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class AuthController : ControllerBase
     {
-        _authService = authService;
-    }
+        private readonly AuthService _authService;
 
-    [HttpPost("register")]
-    public IActionResult Register([FromBody] RegisterRequest request)
-    {
-        if (!_authService.SignUp(request))
-            return BadRequest("User already exists");
-
-        var user = _authService.ValidateUser(new LoginRequest
+        public AuthController(AuthService authService)
         {
-            Email = request.Email,
-            Password = request.Password
-        });
+            _authService = authService;
+        }
 
-        if (user == null) return StatusCode(500, "Unexpected error");
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+        {
+            var registered = await _authService.SignUpAsync(request);
+            if (!registered)
+                return BadRequest("User already exists");
 
-        var token = _authService.GenerateToken(user);
-        return Ok(new { token });
-    }
+            var user = await _authService.ValidateUserAsync(new LoginRequest
+            {
+                Email = request.Email,
+                Password = request.Password
+            });
 
-    [HttpPost("login")]
-    public IActionResult Login([FromBody] LoginRequest request)
-    {
-        var user = _authService.ValidateUser(request);
-        if (user == null)
-            return Unauthorized("Invalid credentials");
+            if (user == null)
+                return StatusCode(500, "Unexpected error");
 
-        var token = _authService.GenerateToken(user);
-        return Ok(new { token });
+            var token = _authService.GenerateToken(user);
+            return Ok(new { token });
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        {
+            var user = await _authService.ValidateUserAsync(request);
+            if (user == null)
+                return Unauthorized("Invalid credentials");
+
+            var token = _authService.GenerateToken(user);
+            return Ok(new { token });
+        }
     }
 }

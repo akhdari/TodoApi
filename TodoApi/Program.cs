@@ -3,6 +3,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 using TodoApi.Services;
+using TodoApi.Data;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,7 +41,13 @@ builder.Services.AddSwaggerGen(options =>
 // Custom services
 builder.Services.AddScoped<TaskDbService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<FileUploadService>(); 
 
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseMySql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        new MySqlServerVersion(new Version(10, 4, 32))
+    ));
 // Read JWT secret key from config
 var jwtKey = builder.Configuration["Jwt:SecretKey"];
 if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32)

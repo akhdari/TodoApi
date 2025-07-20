@@ -1,131 +1,73 @@
-using MySql.Data.MySqlClient; // For interacting with MySQL DB
-using TodoApi.Models; // Importing model classes like TaskItem, User
+using Microsoft.EntityFrameworkCore;
+using TodoApi.Models;
+using TodoApi.Data;
 
-namespace TodoApi.Services;
-
-// Service class to handle all DB operations related to tasks and users
-public class TaskDbService
+namespace TodoApi.Services
 {
-    private readonly string _connectionString;
-
-    // Constructor: fetches the DB connection string from app settings
-    public TaskDbService(IConfiguration config)
+    public class TaskDbService
     {
-        _connectionString = config.GetConnectionString("DefaultConnection")
-            ?? throw new InvalidOperationException("Missing DB connection string.");
-    }
+        private readonly AppDbContext _context;
 
-    // Returns all tasks from the database
-    public List<TaskItem> GetAll()
-    {
-        var tasks = new List<TaskItem>();
-        using var conn = new MySqlConnection(_connectionString);
-        conn.Open();
-        using var cmd = new MySqlCommand("SELECT * FROM tasks", conn);
-        using var reader = cmd.ExecuteReader();
-        while (reader.Read())
+        public TaskDbService(AppDbContext context)
         {
-            tasks.Add(new TaskItem
-            {
-                Id = reader.GetInt32("id"),
-                Title = reader.GetString("title"),
-                IsCompleted = reader.GetBoolean("is_completed")
-            });
+            _context = context;
         }
-        return tasks;
-    }
 
-    // Returns a specific task by its ID
-    public TaskItem? GetById(int id)
-    {
-        using var conn = new MySqlConnection(_connectionString);
-        conn.Open();
-        using var cmd = new MySqlCommand("SELECT * FROM tasks WHERE id = @id", conn);
-        cmd.Parameters.AddWithValue("@id", id);
-        using var reader = cmd.ExecuteReader();
-        if (reader.Read())
+        // Get all tasks
+        public async Task<List<TaskItem>> GetAllAsync()
         {
-            return new TaskItem
-            {
-                Id = reader.GetInt32("id"),
-                Title = reader.GetString("title"),
-                IsCompleted = reader.GetBoolean("is_completed")
-            };
+            return await _context.TaskItems.ToListAsync();
         }
-        return null;
-    }
 
-    // Creates a new task in the database
-    public TaskItem Create(TaskItem task)
-    {
-        using var conn = new MySqlConnection(_connectionString);
-        conn.Open();
-        var cmd = new MySqlCommand(
-            "INSERT INTO tasks (title, is_completed) VALUES (@title, @is_completed); SELECT LAST_INSERT_ID();", conn);
-        cmd.Parameters.AddWithValue("@title", task.Title);
-        cmd.Parameters.AddWithValue("@is_completed", task.IsCompleted);
-
-        task.Id = Convert.ToInt32(cmd.ExecuteScalar()); // Assign that ID to the task object in memory.
-        return task;
-    }
-
-    // Updates an existing task (title and completion status) by ID
-    public bool Update(int id, TaskItem task)  // what to update and what to update it to.
-    {
-        using var conn = new MySqlConnection(_connectionString);
-        conn.Open();
-        var cmd = new MySqlCommand(
-            "UPDATE tasks SET title = @title, is_completed = @is_completed WHERE id = @id", conn);
-        cmd.Parameters.AddWithValue("@title", task.Title);
-        cmd.Parameters.AddWithValue("@is_completed", task.IsCompleted);
-        cmd.Parameters.AddWithValue("@id", id);
-
-        return cmd.ExecuteNonQuery() > 0; // returns true if at least one row was updated
-    }
-
-    // Deletes a task from the database by ID
-    public bool Delete(int id)
-    {
-        using var conn = new MySqlConnection(_connectionString);
-        conn.Open();
-        var cmd = new MySqlCommand("DELETE FROM tasks WHERE id = @id", conn);
-        cmd.Parameters.AddWithValue("@id", id);
-
-        return cmd.ExecuteNonQuery() > 0;
-    }
-
-    // Gets a user by email from the database (used for login and checking duplicates)
-    public User? GetUserByEmail(string email)
-    {
-        using var conn = new MySqlConnection(_connectionString);
-        conn.Open();
-        var cmd = new MySqlCommand("SELECT * FROM users WHERE email = @Email", conn);
-        cmd.Parameters.AddWithValue("@Email", email);
-        using var reader = cmd.ExecuteReader();
-        if (reader.Read())
+        // Get task by ID
+        public async Task<TaskItem?> GetByIdAsync(int id)
         {
-            return new User
-            {
-                Id = reader.GetInt32("id"),
-                Email = reader.GetString("email"),
-                Username = reader.GetString("username"),
-                Password = reader.GetString("password")
-            };
+            return await _context.TaskItems.FindAsync(id);
         }
-        return null;
-    }
 
-    // Creates a new user in the database
-    public void CreateUser(User user)
-    {
-        using var conn = new MySqlConnection(_connectionString);
-        conn.Open();
-        var cmd = new MySqlCommand(
-            "INSERT INTO users (email, username, password) VALUES (@Email, @Username, @Password)", conn);
-        cmd.Parameters.AddWithValue("@Email", user.Email);
-        cmd.Parameters.AddWithValue("@Username", user.Username);
-        cmd.Parameters.AddWithValue("@Password", user.Password);
+        // Create a new task
+        public async Task<TaskItem> CreateAsync(TaskItem task)
+        {
+            _context.TaskItems.Add(task);
+            await _context.SaveChangesAsync();
+            return task;
+        }
 
-        cmd.ExecuteNonQuery();
+        // Update a task
+        public async Task<bool> UpdateAsync(int id, TaskItem updatedTask)
+        {
+            var existing = await _context.TaskItems.FindAsync(id);
+            if (existing == null) return false;
+
+            existing.Title = updatedTask.Title;
+            existing.IsCompleted = updatedTask.IsCompleted;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        // Delete a task
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var task = await _context.TaskItems.FindAsync(id);
+            if (task == null) return false;
+
+            _context.TaskItems.Remove(task);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        // Get user by email
+        public async Task<User?> GetUserByEmailAsync(string email)
+        {
+            return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        }
+
+        // Create a user
+        public async Task CreateUserAsync(User user)
+        {
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+        }
     }
 }
