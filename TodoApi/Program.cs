@@ -5,13 +5,18 @@ using System.Text;
 using TodoApi.Services;
 using TodoApi.Data;
 using Microsoft.EntityFrameworkCore;
+using Sieve.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddHttpContextAccessor();
 
+
+// Midlleware to handle exceptions globally
+// (Moved below after 'app' is declared)
 // Configure Swagger with JWT auth
 builder.Services.AddSwaggerGen(options =>
 {
@@ -41,7 +46,9 @@ builder.Services.AddSwaggerGen(options =>
 // Custom services
 builder.Services.AddScoped<TaskDbService>();
 builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<FileUploadService>(); 
+builder.Services.AddScoped<FileUploadService>();
+builder.Services.AddScoped<ISieveProcessor, SieveProcessor>();
+
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(
@@ -75,13 +82,34 @@ builder.Services.AddCors(options =>
         policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 });
 
+builder.Services.AddTransient<TodoApi.Middlewares.GlobalExceptionHandling>();
+
+
 var app = builder.Build();
 
+
+
 // Middleware
+// after 'app' is declared
+app.Use( async(context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error: {ex.Message}");
+        await context.Response.WriteAsJsonAsync(new { error = ex.Message });
+    }
+});
+
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseCors("AllowAll");
+app.UseStaticFiles(); //wwwroot/*
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<TodoApi.Middlewares.GlobalExceptionHandling>();
 app.MapControllers();
 app.Run();

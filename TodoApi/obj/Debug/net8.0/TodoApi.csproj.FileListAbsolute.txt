@@ -142,3 +142,5 @@ C:\Users\admin\TodoApi\TodoApi\obj\Debug\net8.0\refint\TodoApi.dll
 C:\Users\admin\TodoApi\TodoApi\obj\Debug\net8.0\TodoApi.pdb
 C:\Users\admin\TodoApi\TodoApi\obj\Debug\net8.0\TodoApi.genruntimeconfig.cache
 C:\Users\admin\TodoApi\TodoApi\obj\Debug\net8.0\ref\TodoApi.dll
+C:\Users\admin\TodoApi\TodoApi\bin\Debug\net8.0\TodoApi.staticwebassets.runtime.json
+C:\Users\admin\TodoApi\TodoApi\bin\Debug\net8.0\Sieve.dll

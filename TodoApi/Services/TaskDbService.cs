@@ -14,7 +14,7 @@ namespace TodoApi.Services
         }
 
         // Get all tasks
-        public async Task<List<TaskItem>> GetAllAsync()
+        public async Task<List<TaskItem>> GetAllAsync() // the returbn of an async method is Task<T>
         {
             return await _context.TaskItems.ToListAsync();
         }

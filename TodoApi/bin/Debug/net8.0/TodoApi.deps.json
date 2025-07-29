@@ -16,6 +16,7 @@
           "Microsoft.IdentityModel.Tokens": "8.12.1",
           "MySql.Data": "9.3.0",
           "Pomelo.EntityFrameworkCore.MySql": "8.0.3",
+          "Sieve": "2.5.5",
           "Swashbuckle.AspNetCore": "9.0.3",
           "System.IdentityModel.Tokens.Jwt": "8.12.1"
         },
@@ -335,6 +336,7 @@
           }
         }
       },
+      "Microsoft.CSharp/4.4.1": {},
       "Microsoft.EntityFrameworkCore/8.0.13": {
         "dependencies": {
           "Microsoft.EntityFrameworkCore.Abstractions": "8.0.13",
@@ -640,6 +642,19 @@
           }
         }
       },
+      "Sieve/2.5.5": {
+        "dependencies": {
+          "Microsoft.CSharp": "4.4.1",
+          "Microsoft.Extensions.Options": "8.0.2",
+          "System.ComponentModel.Annotations": "4.4.1"
+        },
+        "runtime": {
+          "lib/netstandard2.1/Sieve.dll": {
+            "assemblyVersion": "2.5.5.0",
+            "fileVersion": "2.5.5.0"
+          }
+        }
+      },
       "Swashbuckle.AspNetCore/9.0.3": {
         "dependencies": {
           "Microsoft.Extensions.ApiDescription.Server": "8.0.0",
@@ -692,6 +707,7 @@
           "System.Runtime.CompilerServices.Unsafe": "6.0.0"
         }
       },
+      "System.ComponentModel.Annotations/4.4.1": {},
       "System.Composition/6.0.0": {
         "dependencies": {
           "System.Composition.AttributedModel": "6.0.0",
@@ -1031,6 +1047,13 @@
       "path": "microsoft.codeanalysis.workspaces.common/4.5.0",
       "hashPath": "microsoft.codeanalysis.workspaces.common.4.5.0.nupkg.sha512"
     },
+    "Microsoft.CSharp/4.4.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-A5hI3gk6WpcBI0QGZY6/d5CCaYUxJgi7iENn1uYEng+Olo8RfI5ReGVkjXjeu3VR3srLvVYREATXa2M0X7FYJA==",
+      "path": "microsoft.csharp/4.4.1",
+      "hashPath": "microsoft.csharp.4.4.1.nupkg.sha512"
+    },
     "Microsoft.EntityFrameworkCore/8.0.13": {
       "type": "package",
       "serviceable": true,
@@ -1241,6 +1264,13 @@
       "path": "pomelo.entityframeworkcore.mysql/8.0.3",
       "hashPath": "pomelo.entityframeworkcore.mysql.8.0.3.nupkg.sha512"
     },
+    "Sieve/2.5.5": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-JNT/m73vu7lzUfi+DNGVRptWYDJTRhS7BgVwqcvlEq5sAhrMmiFZJxM3LPagjsJbcuscMrmMfLgLvhyDNGv/Bg==",
+      "path": "sieve/2.5.5",
+      "hashPath": "sieve.2.5.5.nupkg.sha512"
+    },
     "Swashbuckle.AspNetCore/9.0.3": {
       "type": "package",
       "serviceable": true,
@@ -1289,6 +1319,13 @@
       "sha512": "sha512-l4zZJ1WU2hqpQQHXz1rvC3etVZN+2DLmQMO79FhOTZHMn8tDRr+WU287sbomD0BETlmKDn0ygUgVy9k5xkkJdA==",
       "path": "system.collections.immutable/6.0.0",
       "hashPath": "system.collections.immutable.6.0.0.nupkg.sha512"
+    },
+    "System.ComponentModel.Annotations/4.4.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-ToiYqSCioqhtspq2O/jYKtyTC/T0uwWHBTYlzCi6PRbSSHArN1IaRWeHffDamvms5sye5FDUWCfNZgubQpNRsA==",
+      "path": "system.componentmodel.annotations/4.4.1",
+      "hashPath": "system.componentmodel.annotations.4.4.1.nupkg.sha512"
     },
     "System.Composition/6.0.0": {
       "type": "package",

@@ -20,7 +20,7 @@ namespace TodoApi.Controllers
         {
             var registered = await _authService.SignUpAsync(request);
             if (!registered)
-                return BadRequest("User already exists");
+                return BadRequest(new { message = "User already exists" });
 
             var user = await _authService.ValidateUserAsync(new LoginRequest
             {
@@ -32,7 +32,10 @@ namespace TodoApi.Controllers
                 return StatusCode(500, "Unexpected error");
 
             var token = _authService.GenerateToken(user);
-            return Ok(new { token });
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var shareUrl = $"{baseUrl}/share/{user.Id}";
+
+            return Ok(new { token, shareUrl });
         }
 
         [HttpPost("login")]
@@ -43,7 +46,10 @@ namespace TodoApi.Controllers
                 return Unauthorized("Invalid credentials");
 
             var token = _authService.GenerateToken(user);
-            return Ok(new { token });
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var shareUrl = $"{baseUrl}/share/{user.Id}";
+
+            return Ok(new { token, shareUrl });
         }
     }
 }
