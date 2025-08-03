@@ -2,6 +2,8 @@ using TodoApi.Models;
 using TodoApi.Data;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
 
 namespace TodoApi.Services
 {
@@ -10,35 +12,58 @@ namespace TodoApi.Services
         private readonly AppDbContext _db;
         private readonly IWebHostEnvironment _env;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IConfiguration _configuration;
 
-        public FileUploadService(AppDbContext db, IWebHostEnvironment env, IHttpContextAccessor httpContextAccessor)
+        public FileUploadService(
+            AppDbContext db,
+            IWebHostEnvironment env,
+            IHttpContextAccessor httpContextAccessor,
+            IConfiguration configuration)
         {
             _db = db;
             _env = env;
             _httpContextAccessor = httpContextAccessor;
+            _configuration = configuration;
         }
 
-        public async Task<List<string>> SaveUploadedFiles(List<IFormFile> files, int userId)
+        public async Task<UploadResult> SaveUploadedFiles(List<IFormFile> files, int userId)
         {
-            // Use wwwroot as base, fallback if needed
             var rootPath = _env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            var maxSize = _configuration.GetValue<long>("UploadSettings:MaxSize");
 
-            var publicUrls = new List<string>();
+            var batch = new UploadBatch
+            {
+                Token = Guid.NewGuid().ToString("N"),
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _db.UploadBatches.Add(batch);
+            await _db.SaveChangesAsync();
+
+            var result = new UploadResult
+            {
+                Token = batch.Token,
+                SkippedFiles = new List<string>()
+            };
 
             foreach (var file in files)
             {
-                if (file == null || file.Length == 0)
+                if (file == null || file.Length == 0 || file.Length > maxSize)
+                {
+                    result.SkippedFiles.Add(file?.FileName ?? "Unknown");
                     continue;
+                }
 
                 var fileName = Path.GetFileName(file.FileName);
                 var userFolder = Path.Combine(rootPath, "uploads", userId.ToString());
-                var storagePath = Path.Combine(userFolder, fileName);
-
                 Directory.CreateDirectory(userFolder);
+
+                var storagePath = Path.Combine(userFolder, fileName);
+                var relativePath = $"uploads/{userId}/{fileName}";
 
                 if (File.Exists(storagePath))
                 {
-                    Console.WriteLine($"File {fileName} already exists for user {userId}. Overwriting.");
+                    result.SkippedFiles.Add(fileName);
                     continue;
                 }
 
@@ -47,30 +72,38 @@ namespace TodoApi.Services
                     await file.CopyToAsync(stream);
                 }
 
-                // Store file record in DB
-                var relativePath = $"uploads/{userId}/{fileName}";
                 var uploadedFile = new UploadedFile
                 {
                     UserId = userId,
                     FilePath = relativePath,
-                    StoragePath = storagePath
+                    StoragePath = storagePath,
+                    UploadBatchId = batch.Id
                 };
 
                 _db.UploadedFiles.Add(uploadedFile);
-
-                // Generate public URL
-                var httpContext = _httpContextAccessor.HttpContext;
-                if (httpContext != null)
-                {
-                    var baseUrl = $"{httpContext.Request.Scheme}://{httpContext.Request.Host}";
-                    var publicUrl = $"{baseUrl}/{relativePath}";
-                    publicUrls.Add(publicUrl);
-                }
             }
 
             await _db.SaveChangesAsync();
+            return result;
+        }
 
-            return publicUrls; 
+        public async Task<List<string>> GetSharedFileUrls(string token)
+        {
+            var batch = await _db.UploadBatches
+                .Where(b => b.Token == token)
+                .Select(b => new
+                {
+                    b.CreatedAt,
+                    Files = b.Files.Select(f => f.FilePath)
+                })
+                .FirstOrDefaultAsync();
+
+            if (batch == null) return new List<string>();
+
+            var httpContext = _httpContextAccessor.HttpContext;
+            var baseUrl = httpContext != null ? $"{httpContext.Request.Scheme}://{httpContext.Request.Host}" : "";
+
+            return batch.Files.Select(path => $"{baseUrl}/{path}").ToList();
         }
     }
 }

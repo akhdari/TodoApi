@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TodoApi.Data;
 
@@ -11,9 +12,11 @@ using TodoApi.Data;
 namespace TodoApi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250803075906_AddUploadBatchModel")]
+    partial class AddUploadBatchModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -78,7 +81,7 @@ namespace TodoApi.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int?>("UploadBatchId")
+                    b.Property<int>("UploadBatchId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("UploadTime")
@@ -123,7 +126,9 @@ namespace TodoApi.Migrations
                 {
                     b.HasOne("TodoApi.Models.UploadBatch", "UploadBatch")
                         .WithMany("Files")
-                        .HasForeignKey("UploadBatchId");
+                        .HasForeignKey("UploadBatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("UploadBatch");
                 });

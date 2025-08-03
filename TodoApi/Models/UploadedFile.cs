@@ -9,9 +9,14 @@ public class UploadedFile
     public int UserId { get; set; }
 
     [Required]
-    public string FilePath { get; set; } = string.Empty;     
+    public string FilePath { get; set; } = string.Empty;
 
     [Required]
-    public string StoragePath { get; set; } = string.Empty;   
+    public string StoragePath { get; set; } = string.Empty;
+
     public DateTime UploadTime { get; init; } = DateTime.UtcNow;
+
+public int? UploadBatchId { get; set; }
+
+    public UploadBatch UploadBatch { get; set; } = null!;
 }
