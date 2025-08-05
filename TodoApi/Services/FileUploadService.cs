@@ -1,26 +1,25 @@
 using TodoApi.Models;
-using TodoApi.Data;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
-using Microsoft.EntityFrameworkCore;
+using TodoApi.Services.Db;
 
 namespace TodoApi.Services
 {
     public class FileUploadService
     {
-        private readonly AppDbContext _db;
+        private readonly FileDbService _fileDb;
         private readonly IWebHostEnvironment _env;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _configuration;
 
         public FileUploadService(
-            AppDbContext db,
+            FileDbService fileDb,
             IWebHostEnvironment env,
             IHttpContextAccessor httpContextAccessor,
             IConfiguration configuration)
         {
-            _db = db;
+            _fileDb = fileDb;
             _env = env;
             _httpContextAccessor = httpContextAccessor;
             _configuration = configuration;
@@ -31,20 +30,15 @@ namespace TodoApi.Services
             var rootPath = _env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
             var maxSize = _configuration.GetValue<long>("UploadSettings:MaxSize");
 
-            var batch = new UploadBatch
-            {
-                Token = Guid.NewGuid().ToString("N"),
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _db.UploadBatches.Add(batch);
-            await _db.SaveChangesAsync();
+            var batch = await _fileDb.CreateBatchAsync();
 
             var result = new UploadResult
             {
                 Token = batch.Token,
                 SkippedFiles = new List<string>()
             };
+
+            var uploadedFiles = new List<UploadedFile>();
 
             foreach (var file in files)
             {
@@ -72,38 +66,27 @@ namespace TodoApi.Services
                     await file.CopyToAsync(stream);
                 }
 
-                var uploadedFile = new UploadedFile
+                uploadedFiles.Add(new UploadedFile
                 {
                     UserId = userId,
                     FilePath = relativePath,
                     StoragePath = storagePath,
                     UploadBatchId = batch.Id
-                };
-
-                _db.UploadedFiles.Add(uploadedFile);
+                });
             }
 
-            await _db.SaveChangesAsync();
+            await _fileDb.AddUploadedFilesAsync(uploadedFiles);
             return result;
         }
 
         public async Task<List<string>> GetSharedFileUrls(string token)
         {
-            var batch = await _db.UploadBatches
-                .Where(b => b.Token == token)
-                .Select(b => new
-                {
-                    b.CreatedAt,
-                    Files = b.Files.Select(f => f.FilePath)
-                })
-                .FirstOrDefaultAsync();
-
-            if (batch == null) return new List<string>();
+            var paths = await _fileDb.GetFilePathsByTokenAsync(token);
 
             var httpContext = _httpContextAccessor.HttpContext;
             var baseUrl = httpContext != null ? $"{httpContext.Request.Scheme}://{httpContext.Request.Host}" : "";
 
-            return batch.Files.Select(path => $"{baseUrl}/{path}").ToList();
+            return paths.Select(path => $"{baseUrl}/{path}").ToList();
         }
     }
 }

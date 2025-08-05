@@ -3,6 +3,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 using TodoApi.Services;
+using TodoApi.Services.Db;
 using TodoApi.Data;
 using Microsoft.EntityFrameworkCore;
 using Sieve.Services;
@@ -45,6 +46,14 @@ builder.Services.AddSwaggerGen(options =>
 
 // Custom services
 builder.Services.AddScoped<TaskDbService>();
+builder.Services.AddScoped<UserDbService>();
+builder.Services.AddScoped<FileDbService>();
+
+builder.Services.AddScoped<TaskService>();
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<FileUploadService>();
+
+builder.Services.AddScoped<TaskService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<FileUploadService>();
 builder.Services.AddScoped<ISieveProcessor, SieveProcessor>();
