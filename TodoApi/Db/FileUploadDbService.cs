@@ -23,7 +23,15 @@ namespace TodoApi.Services.Db
 
             _db.UploadBatches.Add(batch);
             await _db.SaveChangesAsync();
+            Console.WriteLine($"Created batch with Id={batch.Id}, Token={batch.Token}");
             return batch;
+        }
+        public async Task<string?> GetTokenByFilePathAsync(string filePath)
+        {
+            var file = await _db.UploadedFiles
+                        .Include(f => f.UploadBatch)
+                        .FirstOrDefaultAsync(f => f.FilePath == filePath);
+            return file?.UploadBatch?.Token;
         }
 
         public async Task AddUploadedFilesAsync(List<UploadedFile> files)
@@ -34,10 +42,16 @@ namespace TodoApi.Services.Db
 
         public async Task<List<string>> GetFilePathsByTokenAsync(string token)
         {
-            return await _db.UploadBatches
-                .Where(b => b.Token == token)
-                .SelectMany(b => b.Files.Select(f => f.FilePath))
-                .ToListAsync();
+            var batch = await _db.UploadBatches
+                .Include(b => b.Files)
+                .FirstOrDefaultAsync(b => b.Token == token);
+
+            if (batch == null || batch.Files == null || !batch.Files.Any())
+                return new List<string>();
+
+            return batch.Files.Select(f => f.FilePath).ToList();
         }
+
+
     }
 }

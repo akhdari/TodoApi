@@ -82,7 +82,7 @@ namespace TodoApi.Services
 
             var token = new JwtSecurityToken(
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(15), // short-lived
+                expires: DateTime.UtcNow.AddMinutes(15), 
                 signingCredentials: creds
             );
 
@@ -104,7 +104,7 @@ namespace TodoApi.Services
             Console.WriteLine($"Token: {resetToken}");
             Console.WriteLine("================================");
 
-
+         
             return true;
         }
         // Reset password using token
@@ -121,7 +121,7 @@ namespace TodoApi.Services
                     ValidateAudience = false,
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ClockSkew = TimeSpan.Zero // no extra time buffer
+                    ClockSkew = TimeSpan.Zero 
                 }, out SecurityToken validatedToken);
 
                 var tokenEmail = principal.Claims.FirstOrDefault(c => c.Type == "email")?.Value;
