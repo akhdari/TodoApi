@@ -63,11 +63,19 @@ namespace TodoApi.Controllers
             if (urls.Count == 0)
                 return NotFound("Invalid or expired link");
 
-            return Ok(new
-            {
-                files = urls
-            });
+            return Ok(new { files = urls });
         }
 
+        [HttpGet("download/{token}/{fileName}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> DownloadFile(string token, string fileName)
+        {
+            var fileStreamResult = await _uploadService.GetFileStreamForDownload(token, fileName);
+
+            if (fileStreamResult == null)
+                return NotFound("File not found or token invalid");
+
+            return File(fileStreamResult.Stream, fileStreamResult.ContentType, fileStreamResult.FileName);
+        }
     }
 }
