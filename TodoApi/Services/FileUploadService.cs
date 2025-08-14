@@ -27,13 +27,14 @@ namespace TodoApi.Services
 
         public async Task<UploadResult> SaveUploadedFiles(List<IFormFile> files, int userId)
         {
+            // WebRootPath = the path to the www root folder on the server
             var rootPath = _env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
             var maxSize = _configuration.GetValue<long>("UploadSettings:MaxSize");
 
             var skippedFiles = new List<string>();
             var uploadedFiles = new List<UploadedFile>();
 
-            var existingTokens = new HashSet<string>();
+            var existingTokens = new HashSet<string>();//data structure that stores unique elements only and allows for fast lookups
 
             foreach (var file in files)
             {
@@ -127,7 +128,6 @@ namespace TodoApi.Services
             return paths.Select(path => $"{baseUrl}/{path}").ToList();
         }
 
-        // downloading
         public async Task<FileStreamResultData?> GetFileStreamForDownload(string token, string fileName)
         {
             var paths = await _fileDb.GetFilePathsByTokenAsync(token);

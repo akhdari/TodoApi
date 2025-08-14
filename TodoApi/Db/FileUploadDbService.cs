@@ -51,7 +51,5 @@ namespace TodoApi.Services.Db
 
             return batch.Files.Select(f => f.FilePath).ToList();
         }
-
-
     }
 }
